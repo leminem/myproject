@@ -2,6 +2,7 @@ import re
 from urllib import request
 from urllib import error
 from w3lib.html import remove_tags
+from pc.mysql import Mysql
 class Spider():
     url='https://book.douban.com/top250'
     href_pattern=r'<a href="(.*?)".*?>'
@@ -21,7 +22,7 @@ class Spider():
     def __mulity_url(self):
         url = 'https://book.douban.com/top250?start={}'
         more_url=[]
-        for i in range(0, 226, 25):
+        for i in range(125, 226, 25):
             mul_url = url.format(i)
             more_url.append(mul_url)
         return more_url
@@ -64,7 +65,7 @@ class Spider():
 
     def __lizi(self,detail_html):
         for html in detail_html:
-            title=re.findall(Spider.title_pattern,html,re.S)[0]
+            name=re.findall(Spider.title_pattern,html,re.S)[0]
             info=re.findall(Spider.info_pattern,html,re.S)[0]
             author=re.findall(Spider.author_pattern,info,re.S)[0].strip().replace('\n','').replace(' ','')
             nei_list=re.findall(Spider.nei_pattern,html,re.S)[0]
@@ -74,8 +75,17 @@ class Spider():
             public_year=re.findall(Spider.public_year_pattern,info,re.S)[0]
             page = re.findall(Spider.page_pattern, info, re.S)[0]
             price = re.findall(Spider.price_pattern, info, re.S)[0]
-            isbn=re.findall(Spider.isbn_pattern, info, re.S)[0]
-            print('title',title)
+            isbn=re.findall(Spider.isbn_pattern, info, re.S)
+            if len(isbn):
+                isbn = isbn[0]
+            else:
+                isbn = '无'
+            mysql=Mysql()
+            sql='INSERT INTO BOOK(name,author,public,content,page,price ,public_year,isbn)'\
+                             'VALUES(?,?,?,?,?,?,?,?)'
+            data=(name,author,public,nei,page,price ,public_year,isbn)
+            mysql.execute_sql(sql,data)
+            print('name',name)
             print('author',author)
             print('public',public)
             print('nei',nei)
